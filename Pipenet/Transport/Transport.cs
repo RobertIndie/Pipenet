@@ -44,7 +44,7 @@ namespace Pipenet.Transport
     /// SocketReceive会将接收的包全部放进packetPool包缓冲池中
     /// 外部线程则调用UpdateReceive处理包缓冲池。
     /// </summary>
-    internal class Transport : ITransport
+    public class Transport : ITransport
     {
         /// <summary>
         /// 判断传输是否连接，一般在Connect()设置
@@ -56,7 +56,7 @@ namespace Pipenet.Transport
         /// <summary>
         /// 传输所使用的socket
         /// </summary>
-        public Socket socket;
+        Socket socket;
         /// <summary>
         /// 一次接收允许的延迟，超出则自动断开连接。
         /// </summary>
@@ -64,7 +64,7 @@ namespace Pipenet.Transport
         /// <summary>
         /// 连接所使用的线程
         /// </summary>
-        public Thread thread;
+        Thread thread;
         /// <summary>
         /// 接收数据线程
         /// </summary>
