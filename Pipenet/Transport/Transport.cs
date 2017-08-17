@@ -10,7 +10,7 @@ namespace Pipenet.Transport
     /// <summary>
     /// 传输接口
     /// </summary>
-    internal interface ITransport
+    public interface ITransport
     {
         bool IsConnected
         {
