@@ -6,7 +6,7 @@ namespace Pipenet.Components
 {
     public class PipelineSettings
     {
-        public enum TransportType
+        public enum ConnectionType
         {
             TCP
         }
@@ -18,7 +18,7 @@ namespace Pipenet.Components
         {
             get; set;
         }
-        public TransportType transportType
+        public ConnectionType transportType
         {
             get;set;
         }

@@ -46,6 +46,10 @@ namespace Pipenet.Transport
     /// </summary>
     public class Transport : ITransport
     {
+        public bool IsListen
+        {
+            get;set;
+        }
         /// <summary>
         /// 判断传输是否连接，一般在Connect()设置
         /// </summary>
@@ -53,10 +57,16 @@ namespace Pipenet.Transport
         {
             get; set;
         }
+        public string ip;
+        public int port;
         /// <summary>
         /// 传输所使用的socket
         /// </summary>
         Socket socket;
+        /// <summary>
+        /// 如果启用侦听，则启用这个Socket
+        /// </summary>
+        Socket clientSocket;
         /// <summary>
         /// 一次接收允许的延迟，超出则自动断开连接。
         /// </summary>
@@ -98,7 +108,22 @@ namespace Pipenet.Transport
         /// </summary>
         protected void Connect()
         {
-
+            IPEndPoint endPoint = new IPEndPoint(IPAddress.Parse(ip), port);
+            socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            if (IsListen)
+            {
+                socket.Bind(endPoint);
+                socket.Listen(0);
+                clientSocket = socket.Accept();
+            }
+            else
+            {
+                socket.Connect(endPoint);
+            }
+            //开启接收线程
+            receiveThread = new Thread(new ThreadStart(SocketReceive));
+            receiveThread.Start();
+            IsConnected = true;
         }
 
         /// <summary>
