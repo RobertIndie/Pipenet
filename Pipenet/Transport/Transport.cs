@@ -14,7 +14,7 @@ namespace Pipenet.Transport
     {
         bool IsConnected
         {
-            get; set;
+            get;
         }
         /// <summary>
         /// 更新处理接收。
@@ -48,17 +48,30 @@ namespace Pipenet.Transport
     {
         public bool IsListen
         {
-            get;set;
+            get;private set;
+        }
+        /// <summary>
+        /// 状态，是否正在侦听，等待客户端的连接。只有启用侦听才有效
+        /// </summary>
+        public bool IsListenning
+        {
+            get;private set;
         }
         /// <summary>
         /// 判断传输是否连接，一般在Connect()设置
         /// </summary>
         public bool IsConnected
         {
-            get; set;
+            get; private set;
         }
-        public string ip;
-        public int port;
+        public string Ip
+        {
+            get;private set;
+        }
+        public int Port
+        {
+            get;private set;
+        }
         /// <summary>
         /// 传输所使用的socket
         /// </summary>
@@ -95,6 +108,13 @@ namespace Pipenet.Transport
         /// 由socket接收到包存放于此。
         /// </summary>
         List<Packet> packetPool = new List<Packet>();
+        public Transport(string ip,int port,bool isListen)
+        {
+            IsConnected = false;
+            Ip = ip;
+            Port = port;
+            IsListen = isListen;
+        }
         /// <summary>
         /// 开始运行，由主线程调用
         /// </summary>
@@ -108,12 +128,13 @@ namespace Pipenet.Transport
         /// </summary>
         protected void Connect()
         {
-            IPEndPoint endPoint = new IPEndPoint(IPAddress.Parse(ip), port);
+            IPEndPoint endPoint = new IPEndPoint(IPAddress.Parse(Ip), Port);
             socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             if (IsListen)
             {
                 socket.Bind(endPoint);
                 socket.Listen(0);
+                IsListenning = true;
                 clientSocket = socket.Accept();
             }
             else
@@ -165,12 +186,13 @@ namespace Pipenet.Transport
         /// <returns></returns>
         Packet Receive(int dataSize)
         {
+            Socket receiveSocket = IsListen ? clientSocket : socket;
             if (receiveTimeout != 0)
-                socket.ReceiveTimeout = receiveTimeout;
+                receiveSocket.ReceiveTimeout = receiveTimeout;
             try
             {
                 byte[] data = new byte[dataSize];
-                if (socket.Receive(data) == 0)
+                if (receiveSocket.Receive(data) == 0)
                 {
                     Disconnect();
                     return null;

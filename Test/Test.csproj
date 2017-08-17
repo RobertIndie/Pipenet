@@ -9,4 +9,8 @@
     <OutputPath>E:\Ambicour\Pipenet\build\</OutputPath>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Pipenet\Pipenet.csproj" />
+  </ItemGroup>
+
 </Project>
