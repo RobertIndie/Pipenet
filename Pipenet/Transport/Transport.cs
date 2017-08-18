@@ -220,7 +220,7 @@ namespace Pipenet.Transport
         /// 设置接收包事件
         /// </summary>
         /// <param name="receiveEventList"></param>
-        public void SetReceiveEventList(Dictionary<PacketType, receiveDelegate> receiveEventList)
+        public void SetReceiveEventList(Dictionary<int, receiveDelegate> receiveEventList)
         {
             this.receiveEventList = receiveEventList;
         }

@@ -28,7 +28,7 @@ namespace Pipenet.Transport
             private set;
             get;
         }
-        public PacketType type = PacketType.None;
+        public int type = PacketType.NONE;
         /// <summary>
         /// 传输（一般为接收）Packet所使用的transport。不被序列化。
         /// </summary>
@@ -82,9 +82,8 @@ namespace Pipenet.Transport
     {
         public int length;
     }
-    [Flags]
-    public enum PacketType
+    public class PacketType
     {
-        None
+        public const int NONE = 0;
     }
 }
