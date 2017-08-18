@@ -4,6 +4,7 @@ using System.Text;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.IO;
 
 namespace Pipenet.Transport
 {
@@ -121,6 +122,7 @@ namespace Pipenet.Transport
         public void Run()
         {
             thread = new Thread(new ThreadStart(Connect));
+            thread.Name = IsListen ? "SERVER" : "CLIENT";
             thread.Start();
         }
         /// <summary>
@@ -155,9 +157,11 @@ namespace Pipenet.Transport
             while (true)
             {
                 //socket.ReceiveTimeout = 3000;
-                Packet headPacket = Receive(256);
-                HeadPacket hp = new HeadPacket();
-                if (headPacket is HeadPacket) hp = (HeadPacket)headPacket;
+                //Packet headPacket = Receive(256);
+                //MemoryStream headStream = ReeiveHeadStream(sizeof(int));
+                //HeadPacket hp = new HeadPacket();
+                //if (headPacket is HeadPacket) hp = (HeadPacket)headPacket;
+                //int lenght = headStream.Read()
                 Packet packet = Receive(hp.length);
                 packet.transport = this;//给包贴上接收者的标签
                 if (packet == null)
@@ -202,6 +206,28 @@ namespace Pipenet.Transport
                     return null;
                 }
                 return Packet.GetPacket(data);
+            }
+            catch (SocketException)
+            {
+                Disconnect();
+                return null;
+            }
+        }
+
+        MemoryStream ReeiveHeadStream(int size)
+        {
+            Socket receiveSocket = IsListen ? clientSocket : socket;
+            if (receiveTimeout != 0)
+                receiveSocket.ReceiveTimeout = receiveTimeout;
+            try
+            {
+                byte[] data = new byte[size];
+                if (receiveSocket.Receive(data) == 0)
+                {
+                    Disconnect();
+                    return null;
+                }
+                return new MemoryStream(data);
             }
             catch (SocketException)
             {
