@@ -155,16 +155,17 @@ namespace Pipenet.Transport
             while (true)
             {
                 //socket.ReceiveTimeout = 3000;
-                HeadPacket hp = (HeadPacket)Receive(100);
+                HeadPacket hp = (HeadPacket)Receive(1024);
                 Packet packet = Receive(hp.length);
                 packet.transport = this;//给包贴上接收者的标签
                 if (packet == null)
                     return;
                 packetPool.Add(packet);
+                UpdateReceive();
             }
         }
 
-        void ITransport.UpdateReceive()
+        public void UpdateReceive()
         {
             foreach (Packet packet in packetPool)
             {
@@ -207,7 +208,7 @@ namespace Pipenet.Transport
             }
         }
 
-        void Send(IPacket packet)
+        public void Send(IPacket packet)
         {
             byte[] data = packet.GetData();
             HeadPacket hp = new HeadPacket();
@@ -225,7 +226,7 @@ namespace Pipenet.Transport
             this.receiveEventList = receiveEventList;
         }
 
-        void Disconnect()
+        public void Disconnect()
         {
             if (socket == null) return;
             socket.Disconnect(true);
@@ -233,21 +234,11 @@ namespace Pipenet.Transport
             socket = null;
             receiveThread.Abort();
         }
-
-        void ITransport.Disconnect()
-        {
-            Disconnect();
-        }
         int packetID = 0;
-        void ITransport.AsynSendAndGet(IPacket packet, receiveDelegate onReceive)
+        public void AsynSendAndGet(IPacket packet, receiveDelegate onReceive)
         {
             packet.SetID(packetID++);
             receiveRequestPool.Add(packet.GetID(), onReceive);
-            Send(packet);
-        }
-
-        void ITransport.Send(IPacket packet)
-        {
             Send(packet);
         }
     }

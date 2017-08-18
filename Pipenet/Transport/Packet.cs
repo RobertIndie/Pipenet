@@ -81,7 +81,22 @@ namespace Pipenet.Transport
     public class HeadPacket:Packet
     {
         public int length;
+        public HeadPacket()
+        {
+            type = -1;
+        }
     }
+
+    [Serializable]
+    public class TestPacket : Packet
+    {
+        public string message;
+        public TestPacket()
+        {
+            type = 1;
+        }
+    }
+
     public class PacketType
     {
         public const int NONE = 0;
