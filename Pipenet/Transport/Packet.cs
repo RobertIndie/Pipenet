@@ -80,7 +80,7 @@ namespace Pipenet.Transport
     [Serializable]
     public class HeadPacket:Packet
     {
-        public int length;
+        public int length = 1024;
         public HeadPacket()
         {
             type = -1;

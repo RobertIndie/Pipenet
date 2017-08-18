@@ -155,7 +155,9 @@ namespace Pipenet.Transport
             while (true)
             {
                 //socket.ReceiveTimeout = 3000;
-                HeadPacket hp = (HeadPacket)Receive(1024);
+                Packet headPacket = Receive(256);
+                HeadPacket hp = new HeadPacket();
+                if (headPacket is HeadPacket) hp = (HeadPacket)headPacket;
                 Packet packet = Receive(hp.length);
                 packet.transport = this;//给包贴上接收者的标签
                 if (packet == null)
