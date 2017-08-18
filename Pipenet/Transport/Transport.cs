@@ -149,6 +149,7 @@ namespace Pipenet.Transport
             IsConnected = true;
         }
 
+        const int HEAD_STREAM_SIZE = sizeof(int)/*包的长度*/;
         /// <summary>
         /// Socket层面上接收包，接收到包放进包缓冲池
         /// </summary>
@@ -157,12 +158,12 @@ namespace Pipenet.Transport
             while (true)
             {
                 //socket.ReceiveTimeout = 3000;
-                //Packet headPacket = Receive(256);
-                //MemoryStream headStream = ReeiveHeadStream(sizeof(int));
-                //HeadPacket hp = new HeadPacket();
-                //if (headPacket is HeadPacket) hp = (HeadPacket)headPacket;
-                //int lenght = headStream.Read()
-                Packet packet = Receive(hp.length);
+                HeadStream headStream = ReceiveHeadStream(HEAD_STREAM_SIZE);
+                int packetLength = BitConverter.ToInt32(headStream.Read(sizeof(int)), 0);
+
+                headStream.Close();
+                Console.WriteLine("准备接收的包长度：" + packetLength);
+                Packet packet = Receive(packetLength);
                 packet.transport = this;//给包贴上接收者的标签
                 if (packet == null)
                     return;
@@ -214,7 +215,7 @@ namespace Pipenet.Transport
             }
         }
 
-        MemoryStream ReeiveHeadStream(int size)
+        HeadStream ReceiveHeadStream(int size)
         {
             Socket receiveSocket = IsListen ? clientSocket : socket;
             if (receiveTimeout != 0)
@@ -227,7 +228,7 @@ namespace Pipenet.Transport
                     Disconnect();
                     return null;
                 }
-                return new MemoryStream(data);
+                return new HeadStream(data);
             }
             catch (SocketException)
             {
@@ -239,9 +240,11 @@ namespace Pipenet.Transport
         public void Send(IPacket packet)
         {
             byte[] data = packet.GetData();
-            HeadPacket hp = new HeadPacket();
-            hp.length = data.Length;
-            socket.Send(hp.GetData());
+            HeadStream headStream = new HeadStream();
+            headStream.Write(BitConverter.GetBytes(data.Length));
+            socket.Send(headStream.GetBuffer());
+            headStream.Close();
+            //Console.WriteLine("准备发送的包长度：" + data.Length);
             socket.Send(data);
         }
 
