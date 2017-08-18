@@ -97,7 +97,7 @@ namespace Pipenet.Transport
         /// <summary>
         /// 接收对应类型的包则调用对应的委托。
         /// </summary>
-        protected Dictionary<PacketType, receiveDelegate> receiveEventList = new Dictionary<PacketType, receiveDelegate>();
+        protected Dictionary<int, receiveDelegate> receiveEventList = new Dictionary<int, receiveDelegate>();
         /// <summary>
         /// 存放请求返回Packet的委托池。
         /// 客户端通过AsynSendAndGet并在这里等待，翘首等待以望相同ID的Packet之归来。但它的另一半从服务器回来时，
@@ -155,7 +155,8 @@ namespace Pipenet.Transport
             while (true)
             {
                 //socket.ReceiveTimeout = 3000;
-                Packet packet = Receive(1024);
+                HeadPacket hp = (HeadPacket)Receive(100);
+                Packet packet = Receive(hp.length);
                 packet.transport = this;//给包贴上接收者的标签
                 if (packet == null)
                     return;
@@ -206,6 +207,15 @@ namespace Pipenet.Transport
             }
         }
 
+        void Send(IPacket packet)
+        {
+            byte[] data = packet.GetData();
+            HeadPacket hp = new HeadPacket();
+            hp.length = data.Length;
+            socket.Send(hp.GetData());
+            socket.Send(data);
+        }
+
         /// <summary>
         /// 设置接收包事件
         /// </summary>
@@ -233,12 +243,12 @@ namespace Pipenet.Transport
         {
             packet.SetID(packetID++);
             receiveRequestPool.Add(packet.GetID(), onReceive);
-            socket.Send(packet.GetData());
+            Send(packet);
         }
 
         void ITransport.Send(IPacket packet)
         {
-            socket.Send(packet.GetData());
+            Send(packet);
         }
     }
 }

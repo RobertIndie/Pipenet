@@ -18,8 +18,7 @@ namespace Pipenet.Transport
     /// <summary>
     /// 包
     /// 加入新包的方法：定义一个类继承此类。
-    ///     在Client.InitClient中填写客户端接收包触发的事件
-    ///     在Server.setReceiveEventLists中填写服务端接收包触发的事件
+    /// 在Transport构造函数里添加包事件
     /// </summary>
     [Serializable]
     public class Packet : IPacket
@@ -77,9 +76,15 @@ namespace Pipenet.Transport
             return Id;
         }
     }
+
+    [Serializable]
+    public class HeadPacket:Packet
+    {
+        public int length;
+    }
+    [Flags]
     public enum PacketType
     {
-        None,
-        Login
+        None
     }
 }
