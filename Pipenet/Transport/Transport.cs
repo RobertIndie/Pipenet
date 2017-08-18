@@ -149,7 +149,7 @@ namespace Pipenet.Transport
             IsConnected = true;
         }
 
-        const int HEAD_STREAM_SIZE = sizeof(int)/*包的长度*/;
+        const int HEAD_STREAM_SIZE = sizeof(int)/*包的长度*/;//应小于256
         /// <summary>
         /// Socket层面上接收包，接收到包放进包缓冲池
         /// </summary>
@@ -158,11 +158,10 @@ namespace Pipenet.Transport
             while (true)
             {
                 //socket.ReceiveTimeout = 3000;
-                HeadStream headStream = ReceiveHeadStream(HEAD_STREAM_SIZE);
+                HeadStream headStream = ReceiveHeadStream(HEAD_STREAM_SIZE);//头部有256字节的信息，提取有用部分到headStream
                 int packetLength = BitConverter.ToInt32(headStream.Read(sizeof(int)), 0);
 
                 headStream.Close();
-                Console.WriteLine("准备接收的包长度：" + packetLength);
                 Packet packet = Receive(packetLength);
                 packet.transport = this;//给包贴上接收者的标签
                 if (packet == null)
@@ -200,13 +199,25 @@ namespace Pipenet.Transport
                 receiveSocket.ReceiveTimeout = receiveTimeout;
             try
             {
-                byte[] data = new byte[dataSize];
-                if (receiveSocket.Receive(data) == 0)
+                //byte[] data = new byte[dataSize];
+                List<byte> data = new List<byte>();
+                int _size = 0;//已接收的长度        
+                while(_size != dataSize)
                 {
-                    Disconnect();
-                    return null;
+                    byte[] tempData = new byte[dataSize - _size];
+                    int tempSize = receiveSocket.Receive(tempData);
+                    //if (_size != dataSize) throw new SystemException("Receive failed.Receive " + _size + "/" + dataSize);
+                    _size += tempSize;
+                    if (_size != dataSize)
+                        Console.WriteLine("FUCK");
+                    if (tempSize == 0)
+                    {
+                        Disconnect();
+                        return null;
+                    }
+                    data.AddRange(tempData);
                 }
-                return Packet.GetPacket(data);
+                return Packet.GetPacket(data.ToArray());
             }
             catch (SocketException)
             {
@@ -224,6 +235,12 @@ namespace Pipenet.Transport
             {
                 byte[] data = new byte[size];
                 if (receiveSocket.Receive(data) == 0)
+                {
+                    Disconnect();
+                    return null;
+                }
+                byte[] buffer = new byte[256 - size];
+                if (receiveSocket.Receive(buffer) == 0)//释放其他数据
                 {
                     Disconnect();
                     return null;
