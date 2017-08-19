@@ -169,6 +169,7 @@ namespace Pipenet.Transport
             }
             //开启接收线程
             receiveThread = new Thread(new ThreadStart(SocketReceive));
+            receiveThread.Name = IsListen ? "SERVER_RECEIVE" : "CLIENT_RECEIVE";
             receiveThread.Start();
             IsConnected = true;
         }
@@ -366,13 +367,21 @@ namespace Pipenet.Transport
             byte[] data = packet.GetData();
             HeadStream headStream = new HeadStream();
             headStream.Write(BitConverter.GetBytes(data.Length));
-            socket.Send(headStream.GetBuffer());
             headStream.Close();
             //Console.WriteLine("准备发送的包长度：" + data.Length);
             List<byte> sendData = new List<byte>();
             sendData.AddRange(PREAMBLE);
             sendData.AddRange(data);
-            socket.Send(sendData.ToArray());
+            if (IsListen)
+            {
+                clientSocket.Send(headStream.GetBuffer());
+                clientSocket.Send(sendData.ToArray());
+            }
+            else
+            {
+                socket.Send(headStream.GetBuffer());
+                socket.Send(sendData.ToArray());
+            }
         }
 
         /// <summary>

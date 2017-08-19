@@ -94,6 +94,7 @@ namespace Pipenet.Transport
         {
             Invoke,Return,NoEvent
         }
+        public int randomID = -1;//有返回值才用到
         public State state = State.Invoke;
         public string eventName;
         public object[] parameters;
