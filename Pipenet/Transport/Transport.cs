@@ -163,10 +163,6 @@ namespace Pipenet.Transport
                 int packetLength = BitConverter.ToInt32(headStream.Read(sizeof(int)), 0);
 
                 headStream.Close();
-                if (packetLength > 206000)
-                {
-
-                }
                 Packet packet = Receive(packetLength);
                 packet.transport = this;//给包贴上接收者的标签
                 if (packet == null)
@@ -255,13 +251,6 @@ namespace Pipenet.Transport
                                     AddData(data, contentData, receiveContentTempSize);
                                 }
                                 isDone = true;
-                                #region TEST
-                                MemoryStream stream1 = new MemoryStream(data.ToArray());
-                                stream1.Position = 0;
-                                BinaryFormatter bf1 = new BinaryFormatter();
-                                Packet result1 = (Packet)bf1.Deserialize(stream1);
-                                stream1.Close();
-                                #endregion
                                 #endregion
                             }
                             else
@@ -286,13 +275,6 @@ namespace Pipenet.Transport
                         {
                             AddData(data, extractedData[1], dataSize);
                             isDone = true;
-                            #region TEST
-                            MemoryStream stream2 = new MemoryStream(data.ToArray());
-                            stream2.Position = 0;
-                            BinaryFormatter bf2 = new BinaryFormatter();
-                            Packet result2 = (Packet)bf2.Deserialize(stream2);
-                            stream2.Close();
-                            #endregion
                         }
                         else
                         {
@@ -301,14 +283,6 @@ namespace Pipenet.Transport
                     }
                 }
                 while (!isDone);
-                #region TEST
-                MemoryStream stream = new MemoryStream(data.ToArray());
-                stream.Position = 0;
-                BinaryFormatter bf = new BinaryFormatter();
-                Packet result = (Packet)bf.Deserialize(stream);
-                stream.Close();
-                #endregion
-                //data.AddRange(resultData);
                 return Packet.GetPacket(data.ToArray());
             }
             catch (SocketException)

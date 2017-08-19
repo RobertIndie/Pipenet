@@ -10,13 +10,17 @@ namespace Pipenet.Components
         {
             TCP
         }
-        public string ip
+        public string Ip
         {
             get; set;
         }
-        public int port
+        public int Port
         {
             get; set;
+        }
+        public bool IsListen
+        {
+            get;set;
         }
         public ConnectionType transportType
         {
@@ -25,6 +29,15 @@ namespace Pipenet.Components
     }
     public class Pipeline
     {
-        
+        PipelineSettings settings;
+        public Pipeline(PipelineSettings settings)
+        {
+            this.settings = settings;
+        }
+
+        public void Connect()
+        {
+
+        }
     }
 }

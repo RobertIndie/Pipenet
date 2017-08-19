@@ -28,27 +28,25 @@ namespace Test
             byte[] a = new byte[] { 0, 1, 2, 3 };
             byte[] b = new byte[] { 0, 1, 2, 3 };
             Console.WriteLine(a.Equals(b));
-            //int i = 0;
-            //while (true)
-            //{
-            //    i++;
-            //    tp.message = "" + i;
-            //    client.Send(tp);
-            //    //Thread.Sleep(100);
-            //}
+            int i = 0;
+            while (true)
+            {
+                i++;
+                tp.message = "" + i;
+                client.Send(tp);
+                //Thread.Sleep(100);
+            }
             client.Send(tp);
             Console.ReadLine();
             Environment.Exit(0);
         }
+        static int temp = 1;
         static void OutputTestPacket(Packet packet)
         {
             TestPacket tp = (TestPacket)packet;
-            Console.WriteLine(tp.message);
-        }
-        [Serializable]
-        struct MesStruct
-        {
-            public int len;
+            //if (int.Parse(tp.message) - temp != 0) throw new Exception("传输数据错误");
+            Console.WriteLine(tp.message + (temp==int.Parse(tp.message)?"":("   FUCK"+(int.Parse(tp.message)-temp))));
+            temp++;
         }
     }
 }
