@@ -39,7 +39,8 @@ namespace Pipenet.Components
 
         public void Connect()
         {
-
+            transport = new SocketTransport(settings.Ip, settings.Port, settings.IsListen);
+            transport.Run();
         }
     }
 }
