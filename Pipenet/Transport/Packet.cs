@@ -87,6 +87,15 @@ namespace Pipenet.Transport
         }
     }
 
+    [Serializable]
+    public class EventInvokePacket:Packet
+    {
+        public EventInvokePacket()
+        {
+
+        }
+    }
+
     public class PacketType
     {
         public const int NONE = 0;

@@ -38,6 +38,7 @@ namespace Pipenet.Transport
         /// 关闭连接
         /// </summary>
         void Disconnect();
+        void Run();
     }
     /// <summary>
     /// 传输类
