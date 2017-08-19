@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Pipenet.Transport
 {
@@ -228,7 +229,7 @@ namespace Pipenet.Transport
                     {
                         if(rawSzie>PREAMBLE_LENGTH)//前导码传输完成
                         {
-                            List<byte[]> extractedData = ExtractRawData(rawData);
+                            List<byte[]> extractedData = ExtractRawData(rawData,rawSzie);
                             if (Util.ByteArrayEquals(extractedData[0], PREAMBLE))//前导码正确
                             {
                                 _size += extractedData[1].Length;
@@ -242,6 +243,13 @@ namespace Pipenet.Transport
                                     AddData(data, contentData, receiveContentTempSize);
                                 }
                                 isDone = true;
+                                #region TEST
+                                MemoryStream stream1 = new MemoryStream(data.ToArray());
+                                stream1.Position = 0;
+                                BinaryFormatter bf1 = new BinaryFormatter();
+                                Packet result1 = (Packet)bf1.Deserialize(stream1);
+                                stream1.Close();
+                                #endregion
                                 #endregion
                             }
                             else
@@ -256,11 +264,18 @@ namespace Pipenet.Transport
                     }
                     else
                     {
-                        List<byte[]> extractedData = ExtractRawData(rawData);
+                        List<byte[]> extractedData = ExtractRawData(rawData,rawSzie);
                         if (Util.ByteArrayEquals(extractedData[0], PREAMBLE))//前导码正确
                         {
                             AddData(data, extractedData[1], dataSize);
                             isDone = true;
+                            #region TEST
+                            MemoryStream stream2 = new MemoryStream(data.ToArray());
+                            stream2.Position = 0;
+                            BinaryFormatter bf2 = new BinaryFormatter();
+                            Packet result2 = (Packet)bf2.Deserialize(stream2);
+                            stream2.Close();
+                            #endregion
                         }
                         else
                         {
@@ -269,7 +284,13 @@ namespace Pipenet.Transport
                     }
                 }
                 while (!isDone);
-
+                #region TEST
+                MemoryStream stream = new MemoryStream(data.ToArray());
+                stream.Position = 0;
+                BinaryFormatter bf = new BinaryFormatter();
+                Packet result = (Packet)bf.Deserialize(stream);
+                stream.Close();
+                #endregion
                 //data.AddRange(resultData);
                 return Packet.GetPacket(data.ToArray());
             }
@@ -279,15 +300,15 @@ namespace Pipenet.Transport
                 return null;
             }
         }
-        List<byte[]> ExtractRawData(byte[] data)
+        List<byte[]> ExtractRawData(byte[] data,int rawSize)
         {
             if (data.Length < PREAMBLE_LENGTH) throw new SystemException("Extract data failed");
             List<byte[]> result = new List<byte[]>();
             byte[] preamble = new byte[PREAMBLE_LENGTH];
             Array.Copy(data, 0, preamble, 0, PREAMBLE_LENGTH);
             result.Add(preamble);
-            byte[] content = new byte[data.Length - PREAMBLE_LENGTH];
-            Array.Copy(data, PREAMBLE_LENGTH, content, 0, data.Length - PREAMBLE_LENGTH);
+            byte[] content = new byte[rawSize - PREAMBLE_LENGTH];
+            Array.Copy(data, PREAMBLE_LENGTH, content, 0, rawSize - PREAMBLE_LENGTH);
             result.Add(content);
             return result;
         }
