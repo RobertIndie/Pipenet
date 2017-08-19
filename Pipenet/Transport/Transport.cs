@@ -189,6 +189,8 @@ namespace Pipenet.Transport
             packetPool.Clear();
         }
 
+
+#region 处理Socket传输
         /// <summary>
         /// 前导码
         /// 加在包头部用以识别是否是正确的包
@@ -205,7 +207,6 @@ namespace Pipenet.Transport
             171
         };
         static readonly int PREAMBLE_LENGTH = PREAMBLE.Length;
-#region 处理Socket传输
         /// <summary>
         /// 从服务器接收信息，返回null为接收失败
         /// </summary>
@@ -218,13 +219,20 @@ namespace Pipenet.Transport
             try
             {
                 List<byte> data = new List<byte>();
+                byte[] _tempBuffer = null;//临时缓存数据，当需要重新接收数据时存储上一次接收的可用数据
+                int _tempBufferSize = 0;
                 bool isDone = false;
                 do
                 {
                     data = new List<byte>();
                     int _size = 0;//已传输的包数据大小
-                    byte[] rawData = new byte[dataSize + PREAMBLE_LENGTH];
+                    byte[] rawData = new byte[dataSize + PREAMBLE_LENGTH - _tempBufferSize];
                     int rawSzie = receiveSocket.Receive(rawData);//尝试传输TCP包数据
+                    if (_tempBuffer != null)//补充上一次接收失败的可用数据
+                    {
+                        rawData = Util.JoinByteArray(_tempBuffer, rawData);
+                        rawSzie += _tempBufferSize;
+                    }
                     if (rawSzie != (dataSize + PREAMBLE_LENGTH))//传输数据错误
                     {
                         if(rawSzie>PREAMBLE_LENGTH)//前导码传输完成
@@ -259,6 +267,8 @@ namespace Pipenet.Transport
                         }
                         else
                         {
+                            _tempBuffer = rawData;
+                            _tempBufferSize = rawSzie;
                             isDone = false;
                         }
                     }
