@@ -163,6 +163,10 @@ namespace Pipenet.Transport
                 int packetLength = BitConverter.ToInt32(headStream.Read(sizeof(int)), 0);
 
                 headStream.Close();
+                if (packetLength > 206000)
+                {
+
+                }
                 Packet packet = Receive(packetLength);
                 packet.transport = this;//给包贴上接收者的标签
                 if (packet == null)
@@ -262,12 +266,15 @@ namespace Pipenet.Transport
                             }
                             else
                             {
+                                _tempBuffer = null;
+                                _tempBufferSize = 0;
                                 isDone = false;
                             }
                         }
                         else
                         {
-                            _tempBuffer = rawData;
+                            _tempBuffer = new byte[rawSzie];
+                            Array.Copy(rawData, 0, _tempBuffer, 0, rawSzie);
                             _tempBufferSize = rawSzie;
                             isDone = false;
                         }

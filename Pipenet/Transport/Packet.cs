@@ -90,6 +90,7 @@ namespace Pipenet.Transport
     [Serializable]
     public class TestPacket : Packet
     {
+        public byte[] testData = new byte[102400];
         public string message;
         public TestPacket()
         {
