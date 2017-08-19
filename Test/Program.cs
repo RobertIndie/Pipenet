@@ -1,6 +1,10 @@
 ﻿using System;
 using Pipenet.Transport;
 using System.Threading;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.IO;
+using System.Text;
+using System.Runtime.Serialization;
 
 namespace Test
 {
@@ -8,8 +12,8 @@ namespace Test
     {
         static void Main(string[] args)
         {
-            Transport client = new Transport("127.000.000.001",8078,false);
-            Transport server = new Transport("127.000.000.001", 8078, true);
+            Transport client = new Transport("27.41.213.139", 8078,false);
+            Transport server = new Transport("0.0.0.0", 8078, true);
             server.SetReceiveEventList(
                     new System.Collections.Generic.Dictionary<int, Transport.receiveDelegate>()
                     {
@@ -21,6 +25,17 @@ namespace Test
             client.Run();
             TestPacket tp = new TestPacket();
             tp.message = "Hello world";
+            byte[] a = new byte[] { 0, 1, 2, 3 };
+            byte[] b = new byte[] { 0, 1, 2, 3 };
+            Console.WriteLine(a.Equals(b));
+            //int i = 0;
+            //while (true)
+            //{
+            //    i++;
+            //    tp.message = "" + i;
+            //    client.Send(tp);
+            //    //Thread.Sleep(100);
+            //}
             client.Send(tp);
             Console.ReadLine();
             Environment.Exit(0);
@@ -29,6 +44,11 @@ namespace Test
         {
             TestPacket tp = (TestPacket)packet;
             Console.WriteLine(tp.message);
+        }
+        [Serializable]
+        struct MesStruct
+        {
+            public int len;
         }
     }
 }

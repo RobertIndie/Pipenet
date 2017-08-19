@@ -189,6 +189,23 @@ namespace Pipenet.Transport
         }
 
         /// <summary>
+        /// 前导码
+        /// 加在包头部用以识别是否是正确的包
+        /// </summary>
+        static readonly byte[] PREAMBLE = new byte[8]
+        {
+            170,
+            170,
+            170,
+            170,
+            170,
+            170,
+            170,
+            171
+        };
+        static readonly int PREAMBLE_LENGTH = PREAMBLE.Length;
+#region 处理Socket传输
+        /// <summary>
         /// 从服务器接收信息，返回null为接收失败
         /// </summary>
         /// <returns></returns>
@@ -199,24 +216,61 @@ namespace Pipenet.Transport
                 receiveSocket.ReceiveTimeout = receiveTimeout;
             try
             {
-                //byte[] data = new byte[dataSize];
                 List<byte> data = new List<byte>();
-                int _size = 0;//已接收的长度        
-                while(_size != dataSize)
+                bool isDone = false;
+                do
                 {
-                    byte[] tempData = new byte[dataSize - _size];
-                    int tempSize = receiveSocket.Receive(tempData);
-                    //if (_size != dataSize) throw new SystemException("Receive failed.Receive " + _size + "/" + dataSize);
-                    _size += tempSize;
-                    if (_size != dataSize)
-                        Console.WriteLine("FUCK");
-                    if (tempSize == 0)
+                    data = new List<byte>();
+                    int _size = 0;//已传输的包数据大小
+                    byte[] rawData = new byte[dataSize + PREAMBLE_LENGTH];
+                    int rawSzie = receiveSocket.Receive(rawData);//尝试传输TCP包数据
+                    if (rawSzie != (dataSize + PREAMBLE_LENGTH))//传输数据错误
                     {
-                        Disconnect();
-                        return null;
+                        if(rawSzie>PREAMBLE_LENGTH)//前导码传输完成
+                        {
+                            List<byte[]> extractedData = ExtractRawData(rawData);
+                            if (Util.ByteArrayEquals(extractedData[0], PREAMBLE))//前导码正确
+                            {
+                                _size += extractedData[1].Length;
+                                data.AddRange(extractedData[1]);
+                                #region 补充数据
+                                while (_size != dataSize)
+                                {
+                                    byte[] contentData = new byte[dataSize - _size];
+                                    int receiveContentTempSize = receiveSocket.Receive(contentData);
+                                    _size += receiveContentTempSize;
+                                    AddData(data, contentData, receiveContentTempSize);
+                                }
+                                isDone = true;
+                                #endregion
+                            }
+                            else
+                            {
+                                isDone = false;
+                            }
+                        }
+                        else
+                        {
+                            isDone = false;
+                        }
                     }
-                    data.AddRange(tempData);
+                    else
+                    {
+                        List<byte[]> extractedData = ExtractRawData(rawData);
+                        if (Util.ByteArrayEquals(extractedData[0], PREAMBLE))//前导码正确
+                        {
+                            AddData(data, extractedData[1], dataSize);
+                            isDone = true;
+                        }
+                        else
+                        {
+                            isDone = false;
+                        }
+                    }
                 }
+                while (!isDone);
+
+                //data.AddRange(resultData);
                 return Packet.GetPacket(data.ToArray());
             }
             catch (SocketException)
@@ -225,7 +279,24 @@ namespace Pipenet.Transport
                 return null;
             }
         }
-
+        List<byte[]> ExtractRawData(byte[] data)
+        {
+            if (data.Length < PREAMBLE_LENGTH) throw new SystemException("Extract data failed");
+            List<byte[]> result = new List<byte[]>();
+            byte[] preamble = new byte[PREAMBLE_LENGTH];
+            Array.Copy(data, 0, preamble, 0, PREAMBLE_LENGTH);
+            result.Add(preamble);
+            byte[] content = new byte[data.Length - PREAMBLE_LENGTH];
+            Array.Copy(data, PREAMBLE_LENGTH, content, 0, data.Length - PREAMBLE_LENGTH);
+            result.Add(content);
+            return result;
+        }
+        void AddData(List<byte> data,byte[] sourceData,int length)
+        {
+            byte[] temp = new byte[length];
+            Array.Copy(sourceData, 0, temp, 0, length);
+            data.AddRange(temp);
+        }
         HeadStream ReceiveHeadStream(int size)
         {
             Socket receiveSocket = IsListen ? clientSocket : socket;
@@ -253,6 +324,7 @@ namespace Pipenet.Transport
                 return null;
             }
         }
+#endregion 
 
         public void Send(IPacket packet)
         {
@@ -262,7 +334,10 @@ namespace Pipenet.Transport
             socket.Send(headStream.GetBuffer());
             headStream.Close();
             //Console.WriteLine("准备发送的包长度：" + data.Length);
-            socket.Send(data);
+            List<byte> sendData = new List<byte>();
+            sendData.AddRange(PREAMBLE);
+            sendData.AddRange(data);
+            socket.Send(sendData.ToArray());
         }
 
         /// <summary>
