@@ -28,7 +28,7 @@ namespace Pipenet.Transport
         /// </summary>
         /// <param name="packet">发送的包</param>
         /// <param name="onReceive">接收到包后触发的委托</param>
-        void AsynSendAndGet(IPacket packet, Transport.receiveDelegate onReceive);
+        void AsynSendAndGet(IPacket packet, SocketTransport.receiveDelegate onReceive);
         /// <summary>
         /// 发送包
         /// </summary>
@@ -46,7 +46,7 @@ namespace Pipenet.Transport
     /// SocketReceive会将接收的包全部放进packetPool包缓冲池中
     /// 外部线程则调用UpdateReceive处理包缓冲池。
     /// </summary>
-    public class Transport : ITransport
+    public class SocketTransport : ITransport
     {
         public bool IsListen
         {
@@ -110,7 +110,7 @@ namespace Pipenet.Transport
         /// 由socket接收到包存放于此。
         /// </summary>
         List<Packet> packetPool = new List<Packet>();
-        public Transport(string ip,int port,bool isListen)
+        public SocketTransport(string ip,int port,bool isListen)
         {
             IsConnected = false;
             Ip = ip;

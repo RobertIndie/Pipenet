@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Pipenet.Transport;
 
 namespace Pipenet.Components
 {
@@ -30,6 +31,7 @@ namespace Pipenet.Components
     public class Pipeline
     {
         PipelineSettings settings;
+        SocketTransport transport;
         public Pipeline(PipelineSettings settings)
         {
             this.settings = settings;
