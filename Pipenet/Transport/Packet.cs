@@ -90,14 +90,23 @@ namespace Pipenet.Transport
     [Serializable]
     public class EventInvokePacket:Packet
     {
+        public enum State
+        {
+            Invoke,Return,NoEvent
+        }
+        public State state = State.Invoke;
+        public string eventName;
+        public object[] parameters;
+        public object returnValue;
         public EventInvokePacket()
         {
-
+            type = PacketType.EVENT_INVOKE;
         }
     }
 
     public class PacketType
     {
         public const int NONE = 0;
+        public const int EVENT_INVOKE = 1;
     }
 }

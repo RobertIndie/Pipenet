@@ -6,18 +6,15 @@ using System.Net.Sockets;
 using System.Threading;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using Pipenet.Components;
 
 namespace Pipenet.Transport
 {
     /// <summary>
     /// 传输接口
     /// </summary>
-    public interface ITransport
+    public interface ITransport:IConnectState
     {
-        bool IsConnected
-        {
-            get;
-        }
         /// <summary>
         /// 更新处理接收。
         /// 由外部线程频繁调用，处理接收的包。
@@ -40,6 +37,21 @@ namespace Pipenet.Transport
         void Disconnect();
         void Run();
     }
+    public interface IConnectState
+    {
+        bool IsConnected
+        {
+            get;
+        }
+        bool IsListen
+        {
+            get;
+        }
+        bool IsListenning
+        {
+            get;
+        }
+    }
     /// <summary>
     /// 传输类
     /// 连接前需要添加包事件receiveEventList。
@@ -49,6 +61,7 @@ namespace Pipenet.Transport
     /// </summary>
     public class SocketTransport : ITransport
     {
+        Pipeline pipeline;
         public bool IsListen
         {
             get;private set;
@@ -111,12 +124,21 @@ namespace Pipenet.Transport
         /// 由socket接收到包存放于此。
         /// </summary>
         List<Packet> packetPool = new List<Packet>();
-        public SocketTransport(string ip,int port,bool isListen)
+        public SocketTransport(Pipeline pipeline,string ip,int port,bool isListen)
         {
+            this.pipeline = pipeline;
             IsConnected = false;
             Ip = ip;
             Port = port;
             IsListen = isListen;
+            SetEvent();
+        }
+        void SetEvent()
+        {
+            receiveEventList = new Dictionary<int, receiveDelegate>()
+            {
+                { PacketType.EVENT_INVOKE,InvokeEvent}
+            };
         }
         /// <summary>
         /// 开始运行，由主线程调用
@@ -377,5 +399,12 @@ namespace Pipenet.Transport
             receiveRequestPool.Add(packet.GetID(), onReceive);
             Send(packet);
         }
+
+        #region 包事件
+        public void InvokeEvent(Packet packet)
+        {
+            pipeline.InvokeEvent((EventInvokePacket)packet);
+        }
+        #endregion
     }
 }
