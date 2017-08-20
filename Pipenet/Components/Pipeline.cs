@@ -6,12 +6,8 @@ using System.Threading;
 
 namespace Pipenet.Components
 {
-    public interface IEventPipline:IConnectState
+    public interface IPacketEvent
     {
-        /// <summary>
-        /// 管道连接
-        /// </summary>
-        void Connect();
         /// <summary>
         /// 添加没有返回值的事件
         /// </summary>
@@ -24,6 +20,13 @@ namespace Pipenet.Components
         /// <param name="name"></param>
         /// <param name="method"></param>
         void AddReturnEvent(string name, Func<object[], object> method);
+    }
+    public interface IEventPipline:IConnectState,IPacketEvent
+    {
+        /// <summary>
+        /// 管道连接
+        /// </summary>
+        void Connect();
         /// <summary>
         /// 触发事件
         /// </summary>
@@ -33,7 +36,7 @@ namespace Pipenet.Components
         /// <returns></returns>
         object Invoke(string name, object[] parameters,bool isReturn = false);
     }
-    public interface IMultiTransport
+    public interface IMultiTransport:IPacketEvent
     {
         event Pipeline.subTransportConnect onSubTransportConnect;
         List<ITransport> subTransportPool
