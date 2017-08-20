@@ -479,7 +479,7 @@ namespace Pipenet.Transport
         #region 包事件
         public void InvokeEvent(Packet packet)
         {
-            pipeline.InvokeEvent((EventInvokePacket)packet);
+            pipeline.InvokeEvent(this,(EventInvokePacket)packet);
         }
         #endregion
     }

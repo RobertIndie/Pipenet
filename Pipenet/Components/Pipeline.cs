@@ -13,13 +13,13 @@ namespace Pipenet.Components
         /// </summary>
         /// <param name="name"></param>
         /// <param name="method"></param>
-        void AddEvent(string name, Action<object[]> method);
+        void AddEvent(string name, Action<ITransport, object[]> method);
         /// <summary>
         /// 添加事件
         /// </summary>
         /// <param name="name"></param>
         /// <param name="method"></param>
-        void AddReturnEvent(string name, Func<object[], object> method);
+        void AddReturnEvent(string name, Func<ITransport, object[], object> method);
     }
     public interface IEventPipline:IConnectState,IAddEvent
     {
@@ -166,8 +166,8 @@ namespace Pipenet.Components
 
         #endregion
         #region IEventPipline
-        Dictionary<string, Action<object[]>> noReturnEventList = new Dictionary<string, Action<object[]>>();
-        Dictionary<string, Func<object[], object>> returnEventList = new Dictionary<string, Func<object[], object>>();
+        Dictionary<string, Action<ITransport,object[]>> noReturnEventList = new Dictionary<string, Action<ITransport, object[]>>();
+        Dictionary<string, Func<ITransport,object[], object>> returnEventList = new Dictionary<string, Func<ITransport, object[], object>>();
         /// <summary>
         /// 等待接收返回值的线程
         /// </summary>
@@ -177,13 +177,13 @@ namespace Pipenet.Components
         /// </summary>
         Dictionary<int, EventInvokePacket> returnValuePacketPool = new Dictionary<int, EventInvokePacket>();
 
-        void IAddEvent.AddEvent(string name, Action<object[]> method)
+        void IAddEvent.AddEvent(string name, Action<ITransport, object[]> method)
         {
             if (returnEventList.ContainsKey(name)) throw new ArgumentException("Name exist");
             noReturnEventList.Add(name, method);
         }
 
-        void IAddEvent.AddReturnEvent(string name, Func<object[], object> method)
+        void IAddEvent.AddReturnEvent(string name, Func<ITransport,object[], object> method)
         {
             if(noReturnEventList.ContainsKey(name)) throw new ArgumentException("Name exist");
             returnEventList.Add(name, method);
@@ -191,18 +191,18 @@ namespace Pipenet.Components
 
         object IEventPipline.Invoke(string name, object[] parameters, bool isReturn = false) => Invoke(transport, name, parameters, isReturn);
 
-        internal void InvokeEvent(EventInvokePacket packet)
+        internal void InvokeEvent(ITransport transport,EventInvokePacket packet)
         {
             if (packet.state == EventInvokePacket.State.Invoke)
             {
                 if (noReturnEventList.ContainsKey(packet.eventName))
                 {
-                    noReturnEventList[packet.eventName](packet.parameters);
+                    noReturnEventList[packet.eventName](transport,packet.parameters);
                     return;
                 }
                 if (returnEventList.ContainsKey(packet.eventName))
                 {
-                    object returnValue = returnEventList[packet.eventName](packet.parameters);
+                    object returnValue = returnEventList[packet.eventName](transport,packet.parameters);
                     packet.state = EventInvokePacket.State.Return;
                     packet.parameters = null;
                     packet.returnValue = returnValue;
