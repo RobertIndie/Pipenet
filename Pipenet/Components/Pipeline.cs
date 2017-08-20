@@ -51,15 +51,25 @@ namespace Pipenet.Components
         {
             get;set;
         }
+        public bool IsMultiConnect
+        {
+            get;set;
+        }
         public ConnectionType transportType
         {
             get;set;
         }
     }
-    public class Pipeline:IEventPipline
+    public class Pipeline:IEventPipline,IMultiTransport
     {
         PipelineSettings settings;
         ITransport transport;
+        public delegate void subTransportConnect(ITransport subTransport);
+        public event subTransportConnect onSubTransportConnect;
+        internal void invokeSubTransportConnect(ITransport subTransport)
+        {
+            onSubTransportConnect(subTransport);
+        }
         public Pipeline(PipelineSettings settings)
         {
             this.settings = settings;
@@ -72,7 +82,8 @@ namespace Pipenet.Components
                 Ip = "127.000.000.001",
                 Port = 8078,
                 IsListen = false,
-                transportType = PipelineSettings.ConnectionType.TCP
+                transportType = PipelineSettings.ConnectionType.TCP,
+                IsMultiConnect = false
             };
         }
 
@@ -83,7 +94,8 @@ namespace Pipenet.Components
                 Ip = "127.000.000.001",
                 Port = 8078,
                 IsListen = isListen,
-                transportType = PipelineSettings.ConnectionType.TCP
+                transportType = PipelineSettings.ConnectionType.TCP,
+                IsMultiConnect = false
             };
         }
 
@@ -91,7 +103,7 @@ namespace Pipenet.Components
         {
             switch (settings.transportType)
             {
-                case PipelineSettings.ConnectionType.TCP: transport = new SocketTransport(this,settings.Ip, settings.Port, settings.IsListen);
+                case PipelineSettings.ConnectionType.TCP: transport = new SocketTransport(this,settings.Ip, settings.Port, settings.IsListen,settings.IsMultiConnect);
                     break;
             }         
             transport.Run();

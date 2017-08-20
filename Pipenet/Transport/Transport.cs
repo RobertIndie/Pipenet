@@ -57,7 +57,7 @@ namespace Pipenet.Transport
     }
     public interface IMultiTransport
     {
-        event SocketTransport.subTransportConnect onSubTransportConnect;
+        event Pipeline.subTransportConnect onSubTransportConnect;
     }
     /// <summary>
     /// 传输类
@@ -66,7 +66,7 @@ namespace Pipenet.Transport
     /// SocketReceive会将接收的包全部放进packetPool包缓冲池中
     /// 外部线程则调用UpdateReceive处理包缓冲池。
     /// </summary>
-    public class SocketTransport : ITransport,IMultiTransport
+    public class SocketTransport : ITransport
     {
         Pipeline pipeline;
         SocketTransport parent;
@@ -122,9 +122,9 @@ namespace Pipenet.Transport
         /// </summary>
         public Thread receiveThread;
         public delegate void receiveDelegate(Packet packet);
-        public delegate void subTransportConnect(ITransport subTransport);
+
         public event receiveDelegate onReceive;
-        public event subTransportConnect onSubTransportConnect;
+        
 
         /// <summary>
         /// 接收对应类型的包则调用对应的委托。
@@ -229,7 +229,7 @@ namespace Pipenet.Transport
         {
             SocketTransport subTransport = new SocketTransport(this, pipeline, socket, receiveEventList);
             subTransportPool.Add(subTransport);
-            onSubTransportConnect(subTransport);
+            pipeline.invokeSubTransportConnect(subTransport);
         }
 
         const int HEAD_STREAM_SIZE = sizeof(int)/*包的长度*/;
