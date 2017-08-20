@@ -17,13 +17,13 @@ namespace Pipenet.Components
         /// </summary>
         /// <param name="name"></param>
         /// <param name="method"></param>
-        void AddNoReturnEvent(string name, Action<object[]> method);
+        void AddEvent(string name, Action<object[]> method);
         /// <summary>
         /// 添加事件
         /// </summary>
         /// <param name="name"></param>
         /// <param name="method"></param>
-        void AddEvent(string name, Func<object[], object> method);
+        void AddReturnEvent(string name, Func<object[], object> method);
         /// <summary>
         /// 触发事件
         /// </summary>
@@ -31,7 +31,21 @@ namespace Pipenet.Components
         /// <param name="parameters"></param>
         /// <param name="isReturn"></param>
         /// <returns></returns>
-        object Invoke(string name, object[] parameters,bool isReturn);
+        object Invoke(string name, object[] parameters,bool isReturn = false);
+    }
+    public interface IMultiTransport
+    {
+        event Pipeline.subTransportConnect onSubTransportConnect;
+        List<ITransport> subTransportPool
+        {
+            get;
+        }
+        void Connect();
+        void Invoke(ITransport transport, string name, object[] parameters, bool isReturn = false);
+        bool IsListenning
+        {
+            get;
+        }
     }
     public class PipelineSettings
     {
@@ -72,6 +86,14 @@ namespace Pipenet.Components
     {
         PipelineSettings settings;
         ITransport transport;
+        internal List<ITransport> _subTransportPool = new List<ITransport>();
+        public List<ITransport> subTransportPool
+        {
+            get
+            {
+                return _subTransportPool;
+            }
+        }
         public delegate void subTransportConnect(ITransport subTransport);
         public event subTransportConnect onSubTransportConnect;
         internal void invokeSubTransportConnect(ITransport subTransport)
@@ -105,38 +127,8 @@ namespace Pipenet.Components
             }         
             transport.Run();
         }
-        #region IConnectState
-        public bool IsConnected => transport.IsConnected;
 
-        public bool IsListen => transport.IsListen;
-
-        public bool IsListenning => transport.IsListenning;
-        #endregion
-        #region IEventPipline
-        Dictionary<string, Action<object[]>> noReturnEventList = new Dictionary<string, Action<object[]>>();
-        Dictionary<string, Func<object[], object>> returnEventList = new Dictionary<string, Func<object[], object>>();
-        /// <summary>
-        /// 等待接收返回值的线程
-        /// </summary>
-        Dictionary<int, Thread> waitingResultThreads = new Dictionary<int, Thread>();
-        /// <summary>
-        /// /等待被接收的包
-        /// </summary>
-        Dictionary<int, EventInvokePacket> returnValuePacketPool = new Dictionary<int, EventInvokePacket>();
-
-        void IEventPipline.AddNoReturnEvent(string name, Action<object[]> method)
-        {
-            if (returnEventList.ContainsKey(name)) throw new ArgumentException("Name exist");
-            noReturnEventList.Add(name, method);
-        }
-
-        void IEventPipline.AddEvent(string name, Func<object[], object> method)
-        {
-            if(noReturnEventList.ContainsKey(name)) throw new ArgumentException("Name exist");
-            returnEventList.Add(name, method);
-        }
-
-        object IEventPipline.Invoke(string name, object[] parameters,bool isReturn)
+        object Invoke(ITransport transport,string name, object[] parameters, bool isReturn)
         {
             EventInvokePacket packet = new EventInvokePacket();
             packet.state = EventInvokePacket.State.Invoke;
@@ -161,6 +153,41 @@ namespace Pipenet.Components
             }
             return null;
         }
+
+        #region IConnectState
+        public bool IsConnected => transport.IsConnected;
+
+        public bool IsListen => transport.IsListen;
+
+        public bool IsListenning => transport.IsListenning;
+
+
+        #endregion
+        #region IEventPipline
+        Dictionary<string, Action<object[]>> noReturnEventList = new Dictionary<string, Action<object[]>>();
+        Dictionary<string, Func<object[], object>> returnEventList = new Dictionary<string, Func<object[], object>>();
+        /// <summary>
+        /// 等待接收返回值的线程
+        /// </summary>
+        Dictionary<int, Thread> waitingResultThreads = new Dictionary<int, Thread>();
+        /// <summary>
+        /// /等待被接收的包
+        /// </summary>
+        Dictionary<int, EventInvokePacket> returnValuePacketPool = new Dictionary<int, EventInvokePacket>();
+
+        void IEventPipline.AddEvent(string name, Action<object[]> method)
+        {
+            if (returnEventList.ContainsKey(name)) throw new ArgumentException("Name exist");
+            noReturnEventList.Add(name, method);
+        }
+
+        void IEventPipline.AddReturnEvent(string name, Func<object[], object> method)
+        {
+            if(noReturnEventList.ContainsKey(name)) throw new ArgumentException("Name exist");
+            returnEventList.Add(name, method);
+        }
+
+        object IEventPipline.Invoke(string name, object[] parameters, bool isReturn = false) => Invoke(transport, name, parameters, isReturn);
 
         internal void InvokeEvent(EventInvokePacket packet)
         {
@@ -192,6 +219,11 @@ namespace Pipenet.Components
                 waitingResultThreads.Remove(packet.randomID);
             }
         }
+
+        #endregion
+        #region IMultiTransport
+
+        void IMultiTransport.Invoke(ITransport subTransport, string name, object[] parameters, bool isReturn) => Invoke(subTransport, name, parameters, isReturn);
         #endregion
     }
 }

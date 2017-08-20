@@ -55,15 +55,6 @@ namespace Pipenet.Transport
             get;
         }
     }
-    public interface IMultiTransport
-    {
-        event Pipeline.subTransportConnect onSubTransportConnect;
-        void Connect();
-        bool IsListenning
-        {
-            get;
-        }
-    }
     /// <summary>
     /// 传输类
     /// 连接前需要添加包事件receiveEventList。
@@ -145,7 +136,6 @@ namespace Pipenet.Transport
         /// 由socket接收到包存放于此。
         /// </summary>
         List<Packet> packetPool = new List<Packet>();
-        List<SocketTransport> subTransportPool = new List<SocketTransport>();
         public SocketTransport(Pipeline pipeline,string ip,int port,bool isListen,bool multiSocket)
         {
             this.pipeline = pipeline;
@@ -227,14 +217,14 @@ namespace Pipenet.Transport
                 receiveThread = new Thread(new ThreadStart(SocketReceive));
                 receiveThread.Name = IsListen ? "SERVER_RECEIVE" : "CLIENT_RECEIVE";
                 receiveThread.Start();
+                IsConnected = true;
             }
-            if(IsListen)IsConnected = true;
         }
 
         void CreateSubTransport(Socket socket)
         {
             SocketTransport subTransport = new SocketTransport(this, pipeline, socket, receiveEventList);
-            subTransportPool.Add(subTransport);
+            pipeline._subTransportPool.Add(subTransport);
             pipeline.invokeSubTransportConnect(subTransport);
         }
 

@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pipenet", "Pipenet\Pipenet.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{E9D7344B-2C36-4B0A-A75B-47E668499F3B}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Demo", "Demo", "{02671437-57D3-4D4F-8CDB-4454094381BE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatRoom", "Demo\ChatRoom\ChatRoom.csproj", "{3A032EA5-6382-41E9-A1E5-D4CB3316DB70}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,9 +25,16 @@ Global
 		{E9D7344B-2C36-4B0A-A75B-47E668499F3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E9D7344B-2C36-4B0A-A75B-47E668499F3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E9D7344B-2C36-4B0A-A75B-47E668499F3B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3A032EA5-6382-41E9-A1E5-D4CB3316DB70}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A032EA5-6382-41E9-A1E5-D4CB3316DB70}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3A032EA5-6382-41E9-A1E5-D4CB3316DB70}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3A032EA5-6382-41E9-A1E5-D4CB3316DB70}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{3A032EA5-6382-41E9-A1E5-D4CB3316DB70} = {02671437-57D3-4D4F-8CDB-4454094381BE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {44CC67BC-79A1-4756-BC5A-857DA0F72E0C}

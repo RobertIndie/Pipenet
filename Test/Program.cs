@@ -12,6 +12,7 @@ namespace Test
     class Program
     {
         static IEventPipline client;
+        static ITransport test;
         static void Main(string[] args)
         {
             PipelineSettings settings = new PipelineSettings()
@@ -20,11 +21,16 @@ namespace Test
                 IsMultiConnect = true
             };
             IMultiTransport server = new Pipeline(settings);
-            server.onSubTransportConnect += (sub) => { Console.WriteLine("成功"); };
+            server.onSubTransportConnect += (sub) => { Console.WriteLine("成功");
+                test = sub;
+            };
             server.Connect();
             IEventPipline client = new Pipeline();
+            client.AddEvent("FUCK", OutputMessage);
             while (!server.IsListenning) ;
             client.Connect();
+            while (test==null) ;
+            server.Invoke(test, "FUCK", new object[] { "HELLO WORLD" });
             Console.ReadLine();
             Environment.Exit(0);
         }
