@@ -6,7 +6,7 @@ using System.Threading;
 
 namespace Pipenet.Components
 {
-    public interface IPacketEvent
+    public interface IAddEvent
     {
         /// <summary>
         /// 添加没有返回值的事件
@@ -21,7 +21,7 @@ namespace Pipenet.Components
         /// <param name="method"></param>
         void AddReturnEvent(string name, Func<object[], object> method);
     }
-    public interface IEventPipline:IConnectState,IPacketEvent
+    public interface IEventPipline:IConnectState,IAddEvent
     {
         /// <summary>
         /// 管道连接
@@ -36,7 +36,7 @@ namespace Pipenet.Components
         /// <returns></returns>
         object Invoke(string name, object[] parameters,bool isReturn = false);
     }
-    public interface IMultiTransport:IPacketEvent
+    public interface IMultiTransport:IAddEvent
     {
         event Action<ITransport> onSubTransportConnect;
         event Action<ITransport> onSubTransportDisconnect;
@@ -177,13 +177,13 @@ namespace Pipenet.Components
         /// </summary>
         Dictionary<int, EventInvokePacket> returnValuePacketPool = new Dictionary<int, EventInvokePacket>();
 
-        void IPacketEvent.AddEvent(string name, Action<object[]> method)
+        void IAddEvent.AddEvent(string name, Action<object[]> method)
         {
             if (returnEventList.ContainsKey(name)) throw new ArgumentException("Name exist");
             noReturnEventList.Add(name, method);
         }
 
-        void IPacketEvent.AddReturnEvent(string name, Func<object[], object> method)
+        void IAddEvent.AddReturnEvent(string name, Func<object[], object> method)
         {
             if(noReturnEventList.ContainsKey(name)) throw new ArgumentException("Name exist");
             returnEventList.Add(name, method);
@@ -202,8 +202,7 @@ namespace Pipenet.Components
                 }
                 if (returnEventList.ContainsKey(packet.eventName))
                 {
-                    //object returnValue = returnEventList[packet.eventName](packet.parameters);
-                    object returnValue = "Helloworld";
+                    object returnValue = returnEventList[packet.eventName](packet.parameters);
                     packet.state = EventInvokePacket.State.Return;
                     packet.parameters = null;
                     packet.returnValue = returnValue;
