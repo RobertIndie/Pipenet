@@ -38,7 +38,8 @@ namespace Pipenet.Components
     }
     public interface IMultiTransport:IPacketEvent
     {
-        event Pipeline.subTransportConnect onSubTransportConnect;
+        event Action<ITransport> onSubTransportConnect;
+        event Action<ITransport> onSubTransportDisconnect;
         List<ITransport> subTransportPool
         {
             get;
@@ -97,12 +98,10 @@ namespace Pipenet.Components
                 return _subTransportPool;
             }
         }
-        public delegate void subTransportConnect(ITransport subTransport);
-        public event subTransportConnect onSubTransportConnect;
-        internal void invokeSubTransportConnect(ITransport subTransport)
-        {
-            onSubTransportConnect(subTransport);
-        }
+        public event Action<ITransport> onSubTransportConnect;
+        public event Action<ITransport> onSubTransportDisconnect;
+        internal void invokeSubTransportConnect(ITransport subTransport) => onSubTransportConnect(subTransport);
+        internal void invokeSubTransportDisconnect(ITransport subTransport) => onSubTransportDisconnect(subTransport);
         public Pipeline(PipelineSettings settings)
         {
             this.settings = settings;

@@ -36,6 +36,14 @@ namespace Pipenet.Transport
         /// </summary>
         void Disconnect();
         void Run();
+        string Ip
+        {
+            get;
+        }
+        int Port
+        {
+            get;
+        }
     }
     public interface IConnectState
     {
@@ -452,6 +460,8 @@ namespace Pipenet.Transport
 
         public void Disconnect()
         {
+            if(isSubTransport)
+                pipeline.invokeSubTransportDisconnect(this);
             if (socket == null) return;
             socket.Disconnect(true);
             socket.Close();
