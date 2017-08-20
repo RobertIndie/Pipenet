@@ -55,21 +55,6 @@ namespace Pipenet.Transport
             get;
         }
     }
-    public interface IPacketEvent
-    {
-        /// <summary>
-        /// 添加没有返回值的事件
-        /// </summary>
-        /// <param name="name"></param>
-        /// <param name="method"></param>
-        void AddEvent(string name, Action<object[]> method);
-        /// <summary>
-        /// 添加事件
-        /// </summary>
-        /// <param name="name"></param>
-        /// <param name="method"></param>
-        void AddReturnEvent(string name, Func<object[], object> method);
-    }
     /// <summary>
     /// 传输类
     /// 连接前需要添加包事件receiveEventList。

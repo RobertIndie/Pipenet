@@ -178,13 +178,13 @@ namespace Pipenet.Components
         /// </summary>
         Dictionary<int, EventInvokePacket> returnValuePacketPool = new Dictionary<int, EventInvokePacket>();
 
-        void IEventPipline.AddEvent(string name, Action<object[]> method)
+        void IPacketEvent.AddEvent(string name, Action<object[]> method)
         {
             if (returnEventList.ContainsKey(name)) throw new ArgumentException("Name exist");
             noReturnEventList.Add(name, method);
         }
 
-        void IEventPipline.AddReturnEvent(string name, Func<object[], object> method)
+        void IPacketEvent.AddReturnEvent(string name, Func<object[], object> method)
         {
             if(noReturnEventList.ContainsKey(name)) throw new ArgumentException("Name exist");
             returnEventList.Add(name, method);
