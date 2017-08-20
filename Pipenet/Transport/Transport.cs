@@ -39,6 +39,9 @@ namespace Pipenet.Transport
     }
     public interface IConnectState
     {
+        /// <summary>
+        /// 如果启用侦听则此项一直为false
+        /// </summary>
         bool IsConnected
         {
             get;
@@ -52,6 +55,10 @@ namespace Pipenet.Transport
             get;
         }
     }
+    public interface IMultiTransport
+    {
+        event SocketTransport.subTransportConnect onSubTransportConnect;
+    }
     /// <summary>
     /// 传输类
     /// 连接前需要添加包事件receiveEventList。
@@ -59,9 +66,11 @@ namespace Pipenet.Transport
     /// SocketReceive会将接收的包全部放进packetPool包缓冲池中
     /// 外部线程则调用UpdateReceive处理包缓冲池。
     /// </summary>
-    public class SocketTransport : ITransport
+    public class SocketTransport : ITransport,IMultiTransport
     {
         Pipeline pipeline;
+        SocketTransport parent;
+        bool isSubTransport = false;
         public bool IsListen
         {
             get;private set;
@@ -88,6 +97,10 @@ namespace Pipenet.Transport
         {
             get;private set;
         }
+        public bool MultiSocket
+        {
+            get;private set;
+        }
         /// <summary>
         /// 传输所使用的socket
         /// </summary>
@@ -109,7 +122,10 @@ namespace Pipenet.Transport
         /// </summary>
         public Thread receiveThread;
         public delegate void receiveDelegate(Packet packet);
+        public delegate void subTransportConnect(ITransport subTransport);
         public event receiveDelegate onReceive;
+        public event subTransportConnect onSubTransportConnect;
+
         /// <summary>
         /// 接收对应类型的包则调用对应的委托。
         /// </summary>
@@ -124,14 +140,37 @@ namespace Pipenet.Transport
         /// 由socket接收到包存放于此。
         /// </summary>
         List<Packet> packetPool = new List<Packet>();
-        public SocketTransport(Pipeline pipeline,string ip,int port,bool isListen)
+        List<SocketTransport> subTransportPool = new List<SocketTransport>();
+        public SocketTransport(Pipeline pipeline,string ip,int port,bool isListen,bool multiSocket)
         {
             this.pipeline = pipeline;
             IsConnected = false;
             Ip = ip;
             Port = port;
             IsListen = isListen;
+            MultiSocket = multiSocket;
             SetEvent();
+        }
+        /// <summary>
+        /// 创建子传输所用的构造函数
+        /// </summary>
+        /// <param name="pipeline"></param>
+        /// <param name="socket"></param>
+        /// <param name="receiveEventList"></param>
+        /// <param name="parent"></param>
+        internal SocketTransport(SocketTransport parent, Pipeline pipeline, Socket socket, Dictionary<int, receiveDelegate> receiveEventList)
+        {
+            this.parent = parent;
+            this.pipeline = pipeline;
+            this.socket = socket;
+            IsListen = false;
+            MultiSocket = false;
+            this.receiveEventList = receiveEventList;
+            isSubTransport = true;
+            receiveThread = new Thread(new ThreadStart(SocketReceive));
+            receiveThread.Name = IsListen ? "SERVER_RECEIVE" : "CLIENT_RECEIVE";
+            receiveThread.Start();
+            IsConnected = true;
         }
         void SetEvent()
         {
@@ -161,20 +200,39 @@ namespace Pipenet.Transport
                 socket.Bind(endPoint);
                 socket.Listen(0);
                 IsListenning = true;
-                clientSocket = socket.Accept();
+                
+
+                if (MultiSocket)
+                {
+                    CreateSubTransport(socket);
+                }
+                else
+                {
+                    clientSocket = socket.Accept();
+                }
             }
             else
             {
                 socket.Connect(endPoint);
             }
-            //开启接收线程
-            receiveThread = new Thread(new ThreadStart(SocketReceive));
-            receiveThread.Name = IsListen ? "SERVER_RECEIVE" : "CLIENT_RECEIVE";
-            receiveThread.Start();
-            IsConnected = true;
+            if (!MultiSocket)
+            {
+                //开启接收线程
+                receiveThread = new Thread(new ThreadStart(SocketReceive));
+                receiveThread.Name = IsListen ? "SERVER_RECEIVE" : "CLIENT_RECEIVE";
+                receiveThread.Start();
+            }
+            if(IsListen)IsConnected = true;
         }
 
-        const int HEAD_STREAM_SIZE = sizeof(int)/*包的长度*/;//应小于256
+        void CreateSubTransport(Socket socket)
+        {
+            SocketTransport subTransport = new SocketTransport(this, pipeline, socket, receiveEventList);
+            subTransportPool.Add(subTransport);
+            onSubTransportConnect(subTransport);
+        }
+
+        const int HEAD_STREAM_SIZE = sizeof(int)/*包的长度*/;
         /// <summary>
         /// Socket层面上接收包，接收到包放进包缓冲池
         /// </summary>
