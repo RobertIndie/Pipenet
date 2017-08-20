@@ -14,7 +14,7 @@ namespace Pipenet.Transport
     /// 传输接口
     /// </summary>
     public interface ITransport:IConnectState
-    {
+    { 
         /// <summary>
         /// 更新处理接收。
         /// 由外部线程频繁调用，处理接收的包。
@@ -158,6 +158,9 @@ namespace Pipenet.Transport
             this.parent = parent;
             this.pipeline = pipeline;
             this.socket = socket;
+            string[] address = socket.RemoteEndPoint.ToString().Split(':');
+            Ip = address[0];
+            Port = int.Parse(address[1]);
             IsListen = false;
             MultiSocket = false;
             this.receiveEventList = receiveEventList;
