@@ -21,7 +21,7 @@ namespace Pipenet.Components
         /// <param name="method"></param>
         void AddReturnEvent(string name, Func<ITransport, object[], object> method);
     }
-    public interface IEventPipline:IConnectState,IAddEvent,IConnectEvent
+    public interface IEventPipeline:IConnectState,IAddEvent,IConnectEvent
     {
         /// <summary>
         /// 管道连接
@@ -90,7 +90,7 @@ namespace Pipenet.Components
             IsMultiConnect = false;
         }
     }
-    public class Pipeline:IEventPipline,IMultiTransport
+    public class Pipeline:IEventPipeline,IMultiTransport
     {
         PipelineSettings settings;
         ITransport transport;
@@ -196,7 +196,7 @@ namespace Pipenet.Components
             returnEventList.Add(name, method);
         }
 
-        object IEventPipline.Invoke(string name, object[] parameters, bool isReturn = false) => Invoke(transport, name, parameters, isReturn);
+        object IEventPipeline.Invoke(string name, object[] parameters, bool isReturn = false) => Invoke(transport, name, parameters, isReturn);
 
         internal void InvokeEvent(ITransport transport,EventInvokePacket packet)
         {

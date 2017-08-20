@@ -21,7 +21,7 @@ namespace ChatRoom
             Port = 8078
         };
         static IMultiTransport server;
-        static IEventPipline client;
+        static IEventPipeline client;
         static Dictionary<ITransport, string> clientList = new Dictionary<ITransport, string>();
         static void Main(string[] args)
         {

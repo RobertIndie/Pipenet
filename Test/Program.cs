@@ -11,7 +11,7 @@ namespace Test
 {
     class Program
     {
-        static IEventPipline client;
+        static IEventPipeline client;
         static ITransport test;
         static void Main(string[] args)
         {
@@ -26,7 +26,7 @@ namespace Test
                 test = sub;
             };
             server.Connect();
-            IEventPipline client = new Pipeline();
+            IEventPipeline client = new Pipeline();
             client.AddEvent("FUCK", OutputMessage);
             while (!server.IsListenning) ;
             client.Connect();
