@@ -14,18 +14,17 @@ namespace Test
         static IEventPipline client;
         static void Main(string[] args)
         {
-            //while (true)
-            //    Console.WriteLine(new Random().Next());
-            IEventPipline server = new Pipeline(true);
+            PipelineSettings settings = new PipelineSettings()
+            {
+                IsListen = true,
+                IsMultiConnect = true
+            };
+            IMultiTransport server = new Pipeline(settings);
+            server.onSubTransportConnect += (sub) => { Console.WriteLine("成功"); };
             server.Connect();
-            client = new Pipeline();
+            IEventPipline client = new Pipeline();
             while (!server.IsListenning) ;
             client.Connect();
-            server.AddNoReturnEvent("OutputMessage", OutputMessage);
-            server.AddEvent("OutputWithReturn", OutputWithReturn);
-            client.Invoke("OutputMessage", new object[] { "Helloworld" },false);
-            object value = client.Invoke("OutputWithReturn", new object[] { "Helloworld" }, true);
-            Console.WriteLine("Return value:" + (string)value);
             Console.ReadLine();
             Environment.Exit(0);
         }

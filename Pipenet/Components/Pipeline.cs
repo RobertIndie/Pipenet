@@ -59,6 +59,14 @@ namespace Pipenet.Components
         {
             get;set;
         }
+        public PipelineSettings()
+        {
+            Ip = "127.000.000.001";
+            Port = 8078;
+            IsListen = false;
+            transportType = ConnectionType.TCP;
+            IsMultiConnect = false;
+        }
     }
     public class Pipeline:IEventPipline,IMultiTransport
     {
@@ -77,25 +85,14 @@ namespace Pipenet.Components
 
         public Pipeline()
         {
-            settings = new PipelineSettings()
-            {
-                Ip = "127.000.000.001",
-                Port = 8078,
-                IsListen = false,
-                transportType = PipelineSettings.ConnectionType.TCP,
-                IsMultiConnect = false
-            };
+            settings = new PipelineSettings();
         }
 
         public Pipeline(bool isListen)
         {
             settings = new PipelineSettings()
             {
-                Ip = "127.000.000.001",
-                Port = 8078,
-                IsListen = isListen,
-                transportType = PipelineSettings.ConnectionType.TCP,
-                IsMultiConnect = false
+                IsListen = isListen
             };
         }
 

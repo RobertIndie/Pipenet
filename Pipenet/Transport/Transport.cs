@@ -58,6 +58,11 @@ namespace Pipenet.Transport
     public interface IMultiTransport
     {
         event Pipeline.subTransportConnect onSubTransportConnect;
+        void Connect();
+        bool IsListenning
+        {
+            get;
+        }
     }
     /// <summary>
     /// 传输类
@@ -168,7 +173,7 @@ namespace Pipenet.Transport
             this.receiveEventList = receiveEventList;
             isSubTransport = true;
             receiveThread = new Thread(new ThreadStart(SocketReceive));
-            receiveThread.Name = IsListen ? "SERVER_RECEIVE" : "CLIENT_RECEIVE";
+            receiveThread.Name = "SUB_ON_SERVER";
             receiveThread.Start();
             IsConnected = true;
         }
@@ -204,7 +209,8 @@ namespace Pipenet.Transport
 
                 if (MultiSocket)
                 {
-                    CreateSubTransport(socket);
+                    Socket subSocket = socket.Accept();
+                    CreateSubTransport(subSocket);
                 }
                 else
                 {
