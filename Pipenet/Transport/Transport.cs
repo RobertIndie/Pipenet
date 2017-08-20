@@ -62,6 +62,7 @@ namespace Pipenet.Transport
         {
             get;
         }
+        event Action<ITransport> onConnect;
     }
     /// <summary>
     /// 传输类
@@ -128,7 +129,8 @@ namespace Pipenet.Transport
         public delegate void receiveDelegate(Packet packet);
 
         public event receiveDelegate onReceive;
-        
+        public event Action<ITransport> onConnect;
+
 
         /// <summary>
         /// 接收对应类型的包则调用对应的委托。
@@ -229,6 +231,7 @@ namespace Pipenet.Transport
                 receiveThread.Name = IsListen ? "SERVER_RECEIVE" : "CLIENT_RECEIVE";
                 receiveThread.Start();
                 IsConnected = true;
+                onConnect(this);
             }
         }
 
