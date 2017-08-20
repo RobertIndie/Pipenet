@@ -62,7 +62,6 @@ namespace Pipenet.Transport
         {
             get;
         }
-        event Action<ITransport> onConnect;
     }
     /// <summary>
     /// 传输类
@@ -129,7 +128,6 @@ namespace Pipenet.Transport
         public delegate void receiveDelegate(Packet packet);
 
         public event receiveDelegate onReceive;
-        public event Action<ITransport> onConnect;
 
 
         /// <summary>
@@ -231,7 +229,7 @@ namespace Pipenet.Transport
                 receiveThread.Name = IsListen ? "SERVER_RECEIVE" : "CLIENT_RECEIVE";
                 receiveThread.Start();
                 IsConnected = true;
-                onConnect(this);
+                pipeline.invokeOnConnect(this);
             }
         }
 
@@ -440,7 +438,7 @@ namespace Pipenet.Transport
             List<byte> sendData = new List<byte>();
             sendData.AddRange(PREAMBLE);
             sendData.AddRange(data);
-            if (IsListen)
+            if (IsListen && !MultiSocket)
             {
                 clientSocket.Send(headStream.GetBuffer());
                 clientSocket.Send(sendData.ToArray());
@@ -480,9 +478,9 @@ namespace Pipenet.Transport
         }
 
         #region 包事件
-        public void InvokeEvent(Packet packet)
+        public static void InvokeEvent(Packet packet)
         {
-            pipeline.InvokeEvent(this,(EventInvokePacket)packet);
+            ((SocketTransport)packet.transport).pipeline.InvokeEvent(packet.transport, (EventInvokePacket)packet);
         }
         #endregion
     }

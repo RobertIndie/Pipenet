@@ -17,6 +17,7 @@ namespace Test
         {
             PipelineSettings settings = new PipelineSettings()
             {
+                Ip = "0.0.0.0",
                 IsListen = true,
                 IsMultiConnect = true
             };
@@ -34,11 +35,11 @@ namespace Test
             Console.ReadLine();
             Environment.Exit(0);
         }
-        static void OutputMessage(object[] parameters)
+        static void OutputMessage(ITransport transport,object[] parameters)
         {
             Console.WriteLine((string)parameters[0]);
         }
-        static object OutputWithReturn(object[] parameters)
+        static object OutputWithReturn(ITransport transport,object[] parameters)
         {
             Console.WriteLine((string)parameters[0]);
             return "Helloworld TOO";

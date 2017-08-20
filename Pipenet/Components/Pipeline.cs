@@ -21,7 +21,7 @@ namespace Pipenet.Components
         /// <param name="method"></param>
         void AddReturnEvent(string name, Func<ITransport, object[], object> method);
     }
-    public interface IEventPipline:IConnectState,IAddEvent
+    public interface IEventPipline:IConnectState,IAddEvent,IConnectEvent
     {
         /// <summary>
         /// 管道连接
@@ -36,7 +36,7 @@ namespace Pipenet.Components
         /// <returns></returns>
         object Invoke(string name, object[] parameters,bool isReturn = false);
     }
-    public interface IMultiTransport:IAddEvent
+    public interface IMultiTransport:IAddEvent,IConnectEvent
     {
         event Action<ITransport> onSubTransportConnect;
         event Action<ITransport> onSubTransportDisconnect;
@@ -50,6 +50,10 @@ namespace Pipenet.Components
         {
             get;
         }
+    }
+    public interface IConnectEvent
+    {
+        event Action<ITransport> onConnect;
     }
     public class PipelineSettings
     {
@@ -100,8 +104,11 @@ namespace Pipenet.Components
         }
         public event Action<ITransport> onSubTransportConnect;
         public event Action<ITransport> onSubTransportDisconnect;
+        public event Action<ITransport> onConnect;
+
         internal void invokeSubTransportConnect(ITransport subTransport) => onSubTransportConnect(subTransport);
         internal void invokeSubTransportDisconnect(ITransport subTransport) => onSubTransportDisconnect(subTransport);
+        internal void invokeOnConnect(ITransport transport) => onConnect(transport);
         public Pipeline(PipelineSettings settings)
         {
             this.settings = settings;
