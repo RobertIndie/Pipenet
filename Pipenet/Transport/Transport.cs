@@ -210,8 +210,11 @@ namespace Pipenet.Transport
 
                 if (MultiSocket)
                 {
-                    Socket subSocket = socket.Accept();
-                    CreateSubTransport(subSocket);
+                    while (true)
+                    {
+                        Socket subSocket = socket.Accept();
+                        CreateSubTransport(subSocket);
+                    }
                 }
                 else
                 {
@@ -246,19 +249,28 @@ namespace Pipenet.Transport
         /// </summary>
         protected void SocketReceive()
         {
-            while (true)
+            try
             {
-                //socket.ReceiveTimeout = 3000;
-                HeadStream headStream = ReceiveHeadStream(HEAD_STREAM_SIZE);//头部有256字节的信息，提取有用部分到headStream
-                int packetLength = BitConverter.ToInt32(headStream.Read(sizeof(int)), 0);
+                while (true)
+                {
 
-                headStream.Close();
-                Packet packet = Receive(packetLength);
-                packet.transport = this;//给包贴上接收者的标签
-                if (packet == null)
-                    return;
-                packetPool.Add(packet);
-                UpdateReceive();
+                    //socket.ReceiveTimeout = 3000;
+                    HeadStream headStream = ReceiveHeadStream(HEAD_STREAM_SIZE);//头部有256字节的信息，提取有用部分到headStream
+                    int packetLength = BitConverter.ToInt32(headStream.Read(sizeof(int)), 0);
+
+                    headStream.Close();
+                    Packet packet = Receive(packetLength);
+                    packet.transport = this;//给包贴上接收者的标签
+                    if (packet == null)
+                        return;
+                    packetPool.Add(packet);
+                    UpdateReceive();
+                }
+
+            }
+            catch (Exception)
+            {
+                Disconnect();
             }
         }
 
@@ -430,23 +442,30 @@ namespace Pipenet.Transport
 
         public void Send(IPacket packet)
         {
-            byte[] data = packet.GetData();
-            HeadStream headStream = new HeadStream();
-            headStream.Write(BitConverter.GetBytes(data.Length));
-            headStream.Close();
-            //Console.WriteLine("准备发送的包长度：" + data.Length);
-            List<byte> sendData = new List<byte>();
-            sendData.AddRange(PREAMBLE);
-            sendData.AddRange(data);
-            if (IsListen && !MultiSocket)
+            try
             {
-                clientSocket.Send(headStream.GetBuffer());
-                clientSocket.Send(sendData.ToArray());
+                byte[] data = packet.GetData();
+                HeadStream headStream = new HeadStream();
+                headStream.Write(BitConverter.GetBytes(data.Length));
+                headStream.Close();
+                //Console.WriteLine("准备发送的包长度：" + data.Length);
+                List<byte> sendData = new List<byte>();
+                sendData.AddRange(PREAMBLE);
+                sendData.AddRange(data);
+                if (IsListen && !MultiSocket)
+                {
+                    clientSocket.Send(headStream.GetBuffer());
+                    clientSocket.Send(sendData.ToArray());
+                }
+                else
+                {
+                    socket.Send(headStream.GetBuffer());
+                    socket.Send(sendData.ToArray());
+                }
             }
-            else
+            catch (Exception)
             {
-                socket.Send(headStream.GetBuffer());
-                socket.Send(sendData.ToArray());
+                Disconnect();
             }
         }
 
@@ -458,16 +477,18 @@ namespace Pipenet.Transport
         {
             this.receiveEventList = receiveEventList;
         }
-
+        bool isClosed = false;
         public void Disconnect()
         {
+            if (isClosed) return;
             if(isSubTransport)
                 pipeline.invokeSubTransportDisconnect(this);
             if (socket == null) return;
             socket.Disconnect(true);
             socket.Close();
             socket = null;
-            receiveThread.Abort();
+            isClosed = true;
+            //receiveThread.Abort();
         }
         int packetID = 0;
         public void AsynSendAndGet(IPacket packet, receiveDelegate onReceive)

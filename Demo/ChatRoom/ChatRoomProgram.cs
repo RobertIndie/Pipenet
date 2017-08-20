@@ -25,8 +25,9 @@ namespace ChatRoom
         static Dictionary<ITransport, string> clientList = new Dictionary<ITransport, string>();
         static void Main(string[] args)
         {
-            //if (args.Length != 0 && args[0] == "-server")
+            if (args.Length != 0 && args[0] == "-server")
             {
+                Console.WriteLine("服务端开启");
                 server = new Pipeline(serverSettings);
                 server.onSubTransportConnect += (sub) =>
                 {
@@ -35,15 +36,15 @@ namespace ChatRoom
                 };
                 server.onSubTransportDisconnect += (sub) =>
                 {
-                    Broadcast(string.Format("{0} 离开房间", clientList[sub]));
+                    string name = clientList[sub];
                     clientList.Remove(sub);
+                    Broadcast(string.Format("{0} 离开房间", name));
                 };
                 server.AddEvent("SetName", SetName);
                 server.AddEvent("Send", SendMessage);
                 server.Connect();
             }
-            while (!server.IsListenning) ;
-            //else
+            else
             {
                 Console.WriteLine("输入你的名字:");
                 string name = Console.ReadLine();
@@ -63,6 +64,7 @@ namespace ChatRoom
         }
         static void Broadcast(string message)
         {
+            Console.WriteLine(message);
             foreach(ITransport tp in clientList.Keys)
                 server.Invoke(tp, "Output", new object[]{ message});
         }
@@ -80,7 +82,7 @@ namespace ChatRoom
         static void SetName(ITransport transport,object[] parameters)
         {
             clientList[transport] = (string)parameters[0];
-            Broadcast(string.Format("{0}:{1} 将名字更改为 {2}", transport.Ip, transport.Port, clientList[transport]));
+            Broadcast(string.Format("{0}:{1} 将名字设置为 {2}", transport.Ip, transport.Port, clientList[transport]));
         }
         static void SendMessage(ITransport transport,object[] parameters)
         {
