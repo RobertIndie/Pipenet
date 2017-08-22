@@ -7,7 +7,7 @@ using System.Threading;
 
 namespace Pipenet.Components
 {
-    public interface IReflectPipeline:IConnectEvent
+    public interface IReflectPipeline:IConnectEvent, IConnectState
     {
         void Connect();
         Type invokedClass

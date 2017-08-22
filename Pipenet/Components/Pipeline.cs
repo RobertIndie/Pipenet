@@ -49,9 +49,9 @@ namespace Pipenet.Components
         internal List<ITransport> _subTransportPool = new List<ITransport>();
         public List<ITransport> subTransportPool { get => _subTransportPool; }
         #region SocketTransport
-        public event Action<ITransport> onSubTransportConnect;
-        public event Action<ITransport> onSubTransportDisconnect;
-        public event Action<ITransport> onConnect;
+        public event Action<ITransport> onSubTransportConnect = (transport) => { };
+        public event Action<ITransport> onSubTransportDisconnect = (transport) => { };
+        public event Action<ITransport> onConnect = (transport)=> { };
 
         internal void invokeSubTransportConnect(ITransport subTransport) => onSubTransportConnect(subTransport);
         internal void invokeSubTransportDisconnect(ITransport subTransport) => onSubTransportDisconnect(subTransport);

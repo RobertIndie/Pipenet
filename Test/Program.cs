@@ -12,20 +12,30 @@ namespace Test
 {
     class Program
     {
+        static PipelineSettings serverSettings = new PipelineSettings()
+        {
+            Ip = "0.0.0.0",
+            Port = 8078,
+            IsListen = true,
+            IsMultiConnect = false,
+            transportType = PipelineSettings.ConnectionType.TCP
+        };
+        static PipelineSettings clientSettings = new PipelineSettings()
+        {
+            Ip = "127.000.000.001",
+            Port = 8078
+        };
         static void Main(string[] args)
         {
-            Console.WriteLine("Start");
-            Invoke("OutputMessage", "Helloworld");
+            IReflectPipeline server = new ReflectPipeline(serverSettings);
+            server.Connect();
+            while (!server.IsListenning) ;
+            IReflectPipeline client = new ReflectPipeline(clientSettings);
+            client.Connect();
             Console.ReadLine();
             Environment.Exit(0);
         }
-        static void Invoke(string name,params object[] args)
-        {
-            Type type = typeof(Program);
-            MethodInfo info = type.GetMethod(name);
-            info.Invoke(null, args);
-        }
-        public static void OutputMessage(string message)
+        public static void Output(string message)
         {
             Console.WriteLine(message);
         }
