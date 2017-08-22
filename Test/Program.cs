@@ -29,9 +29,12 @@ namespace Test
         {
             IReflectPipeline server = new ReflectPipeline(serverSettings);
             server.Connect();
+            server.invokedClass = typeof(Program);
             while (!server.IsListenning) ;
             IReflectPipeline client = new ReflectPipeline(clientSettings);
             client.Connect();
+            new Random().NextBytes(data);
+            client.Invoke("Output", "Hello world");
             Console.ReadLine();
             Environment.Exit(0);
         }
