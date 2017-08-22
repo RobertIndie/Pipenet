@@ -105,9 +105,28 @@ namespace Pipenet.Transport
         }
     }
 
+    [Serializable]
+    public class ReflectInvokePacket : Packet
+    {
+        public enum State
+        {
+            Invoke,InvokeReturnMethod,Return,NoMethodOrError
+        }
+        public int randomID = -1;//有返回值才用到
+        public State state = State.Invoke;
+        public string methodName;
+        public object[] parameters;
+        public object returnValue;
+        public ReflectInvokePacket()
+        {
+            type = PacketType.REFLECT_INVOKE;
+        }
+    }
+
     public class PacketType
     {
         public const int NONE = 0;
         public const int EVENT_INVOKE = 1;
+        public const int REFLECT_INVOKE = 2;
     }
 }

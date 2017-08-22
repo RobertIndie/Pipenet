@@ -20,7 +20,7 @@ namespace ChatRoom
             Ip = "127.000.000.001",
             Port = 8078
         };
-        static IMultiTransport server;
+        static IEventMultiTransport server;
         static IEventPipeline client;
         static Dictionary<ITransport, string> clientList = new Dictionary<ITransport, string>();
         static void Main(string[] args)
@@ -28,7 +28,7 @@ namespace ChatRoom
             if (args.Length != 0 && args[0] == "-server")
             {
                 Console.WriteLine("服务端开启");
-                server = new Pipeline(serverSettings);
+                server = new EventPipeline(serverSettings);
                 server.onSubTransportConnect += (sub) =>
                 {
                     clientList.Add(sub, string.Format("{0}:{1}", sub.Ip, sub.Port));
@@ -48,7 +48,7 @@ namespace ChatRoom
             {
                 Console.WriteLine("输入你的名字:");
                 string name = Console.ReadLine();
-                client = new Pipeline(clientSettings);
+                client = new EventPipeline(clientSettings);
                 client.AddEvent("Output", OutputMessage);
                 client.onConnect += (transport) =>
                 {

@@ -41,10 +41,11 @@ namespace Pipenet.Components
             IsMultiConnect = false;
         }
     }
-    public class Pipeline:IEventPipeline,IMultiTransport
+    public abstract class Pipeline:IConnectState
     {
-        PipelineSettings settings;
-        ITransport transport;
+        protected PipelineSettings settings;
+        protected ITransport transport;
+
         internal List<ITransport> _subTransportPool = new List<ITransport>();
         public List<ITransport> subTransportPool { get => _subTransportPool; }
         #region SocketTransport
@@ -73,43 +74,16 @@ namespace Pipenet.Components
                 IsListen = isListen
             };
         }
-
         public void Connect()
         {
             switch (settings.transportType)
             {
-                case PipelineSettings.ConnectionType.TCP: transport = new SocketTransport(this,settings.Ip, settings.Port, settings.IsListen,settings.IsMultiConnect);
+                case PipelineSettings.ConnectionType.TCP:
+                    transport = new SocketTransport(this, settings.Ip, settings.Port, settings.IsListen, settings.IsMultiConnect);
                     break;
-            }         
+            }
             transport.Run();
         }
-
-        object Invoke(ITransport transport,string name, object[] parameters, bool isReturn)
-        {
-            EventInvokePacket packet = new EventInvokePacket();
-            packet.state = EventInvokePacket.State.Invoke;
-            packet.eventName = name;
-            packet.parameters = parameters;
-            packet.randomID = isReturn ? new Random().Next() : -1;
-            transport.Send(packet);
-            if (isReturn)
-            {
-                waitingResultThreads.Add(packet.randomID, Thread.CurrentThread);
-                try
-                {
-                    //Thread.Sleep(Timeout.Infinite);
-                    Thread.Sleep(100);
-                }
-                catch (Exception)
-                {
-                    EventInvokePacket returnPacket = returnValuePacketPool[packet.randomID];
-                    returnValuePacketPool.Remove(returnPacket.randomID);
-                    return returnPacket.returnValue;
-                }
-            }
-            return null;
-        }
-
         #region IConnectState
         public bool IsConnected => transport.IsConnected;
 
@@ -118,67 +92,6 @@ namespace Pipenet.Components
         public bool IsListenning => transport.IsListenning;
 
 
-        #endregion
-        #region IEventPipline
-        Dictionary<string, Action<ITransport,object[]>> noReturnEventList = new Dictionary<string, Action<ITransport, object[]>>();
-        Dictionary<string, Func<ITransport,object[], object>> returnEventList = new Dictionary<string, Func<ITransport, object[], object>>();
-        /// <summary>
-        /// 等待接收返回值的线程
-        /// </summary>
-        Dictionary<int, Thread> waitingResultThreads = new Dictionary<int, Thread>();
-        /// <summary>
-        /// /等待被接收的包
-        /// </summary>
-        Dictionary<int, EventInvokePacket> returnValuePacketPool = new Dictionary<int, EventInvokePacket>();
-
-        void IAddEvent.AddEvent(string name, Action<ITransport, object[]> method)
-        {
-            if (returnEventList.ContainsKey(name)) throw new ArgumentException("Name exist");
-            noReturnEventList.Add(name, method);
-        }
-
-        void IAddEvent.AddReturnEvent(string name, Func<ITransport,object[], object> method)
-        {
-            if(noReturnEventList.ContainsKey(name)) throw new ArgumentException("Name exist");
-            returnEventList.Add(name, method);
-        }
-
-        object IEventPipeline.Invoke(string name, object[] parameters, bool isReturn = false) => Invoke(transport, name, parameters, isReturn);
-
-        internal void InvokeEvent(ITransport transport,EventInvokePacket packet)
-        {
-            if (packet.state == EventInvokePacket.State.Invoke)
-            {
-                if (noReturnEventList.ContainsKey(packet.eventName))
-                {
-                    noReturnEventList[packet.eventName](transport,packet.parameters);
-                    return;
-                }
-                if (returnEventList.ContainsKey(packet.eventName))
-                {
-                    object returnValue = returnEventList[packet.eventName](transport,packet.parameters);
-                    packet.state = EventInvokePacket.State.Return;
-                    packet.parameters = null;
-                    packet.returnValue = returnValue;
-                    transport.Send(packet);
-                    return;
-                }
-                packet.parameters = null;
-                packet.state = EventInvokePacket.State.NoEvent;
-                transport.Send(packet);
-            }
-            else if(packet.state == EventInvokePacket.State.Return)
-            {
-                returnValuePacketPool.Add(packet.randomID, packet);
-                waitingResultThreads[packet.randomID].Interrupt();
-                waitingResultThreads.Remove(packet.randomID);
-            }
-        }
-
-        #endregion
-        #region IMultiTransport
-
-        void IMultiTransport.Invoke(ITransport subTransport, string name, object[] parameters, bool isReturn) => Invoke(subTransport, name, parameters, isReturn);
         #endregion
     }
 }

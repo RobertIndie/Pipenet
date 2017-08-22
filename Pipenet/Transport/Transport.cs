@@ -182,7 +182,8 @@ namespace Pipenet.Transport
         {
             receiveEventList = new Dictionary<int, receiveDelegate>()
             {
-                { PacketType.EVENT_INVOKE,InvokeEvent}
+                { PacketType.EVENT_INVOKE,InvokeEvent},
+                { PacketType.REFLECT_INVOKE,InvokeMethod}
             };
         }
         /// <summary>
@@ -501,7 +502,11 @@ namespace Pipenet.Transport
         #region 包事件
         public static void InvokeEvent(Packet packet)
         {
-            ((SocketTransport)packet.transport).pipeline.InvokeEvent(packet.transport, (EventInvokePacket)packet);
+            ((EventPipeline)((SocketTransport)packet.transport).pipeline).InvokeEvent(packet.transport, (EventInvokePacket)packet);
+        }
+        public static void InvokeMethod(Packet packet)
+        {
+            ((ReflectPipeline)((SocketTransport)packet.transport).pipeline).InvokeMethod(packet.transport, (ReflectInvokePacket)packet);
         }
         #endregion
     }
